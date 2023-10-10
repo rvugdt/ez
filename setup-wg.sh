@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+apt install wireguard -y
+
 read -p "WG interface name: " wgname
 read -p "WG Address: " wgaddr
 
@@ -14,13 +16,11 @@ wgcfg=$wgdir/$wgname.conf
 echo "[Interface]
 PrivateKey=$privkey
 Address=$wgaddr/32
-#Listen=
 MTU=1450
 
 [Peer]
 Endpoint=
 PublicKey=
-#PresharedKey=
 AllowedIPs=
 PersistentKeepalive=25
 " > $wgcfg
