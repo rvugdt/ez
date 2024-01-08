@@ -1,0 +1,41 @@
+#!/usr/bin/bash
+
+# script for quickly copying qcow2 drives of shutdown VMs to specified folder
+
+if [ -z "$1" ]; then
+    echo "ERROR: destination folder not specified."
+    exit 1
+fi
+
+if [ ! -e "$1" ]; then
+    echo "Error: Path '$1' not found."
+    exit 1
+fi
+
+bupdir=${1%/}
+
+declare -A VMDRVS
+vmnames=$(virsh list --state-shutoff --name)
+
+
+for VMNAME in $vmnames
+do
+        DRVSLIST=()
+        DRVSLIST+=$(virsh dumpxml --domain $VMNAME | grep "source file" | grep "qcow2" | sed "s/<source file='//g" | sed "s/\.qcow2.*/.qcow2/g")
+        VMDRVS[$VMNAME]=$DRVSLIST
+done
+
+echo
+echo
+
+for vmname in ${!VMDRVS[*]}
+do
+        for qcow2name in ${VMDRVS[$vmname]}
+        do
+                targetdir=$bupdir/$(date "+%Y-%m-%d")/$vmname
+                mkdir -p $targetdir
+                echo "copying" $qcow2name "of VM" $vmname " to " $targetdir
+                rsync --progress $qcow2name $targetdir/$(basename $qcow2name) &&
+                echo " >>> DONE"
+        done
+done
